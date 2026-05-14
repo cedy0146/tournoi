@@ -1,0 +1,87 @@
+package dao;
+
+import model.Classement;
+import model.Equipe;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ClassementDAO {
+
+    public List<Classement> findByTournoi(int idTournoi) throws SQLException {
+        List<Classement> list = new ArrayList<>();
+        String sql = "SELECT c.id_classement, c.id_tournoi, c.id_equipe, c.points, c.matchs_joues, " +
+                     "c.victoires, c.nuls, c.defaites, c.buts_pour, c.buts_contre, " +
+                     "e.id_equipe as e_id, e.nom as e_nom, e.ville as e_ville " +
+                     "FROM classement c JOIN equipe e ON c.id_equipe = e.id_equipe " +
+                     "WHERE c.id_tournoi = ? " +
+                     "ORDER BY c.points DESC, (c.buts_pour - c.buts_contre) DESC, c.buts_pour DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idTournoi);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        }
+        return list;
+    }
+
+    public void initClassement(int idTournoi, int idEquipe) throws SQLException {
+        String sql = "INSERT IGNORE INTO classement (id_tournoi, id_equipe) VALUES (?,?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idTournoi);
+            ps.setInt(2, idEquipe);
+            ps.executeUpdate();
+        }
+    }
+
+    public void updateClassement(int idTournoi, int idEquipe,
+                                  int points, int matchsJoues,
+                                  int victoires, int nuls, int defaites,
+                                  int butsPour, int butsContre) throws SQLException {
+        String sql = "UPDATE classement SET points=points+?, matchs_joues=matchs_joues+?, " +
+                     "victoires=victoires+?, nuls=nuls+?, defaites=defaites+?, " +
+                     "buts_pour=buts_pour+?, buts_contre=buts_contre+? " +
+                     "WHERE id_tournoi=? AND id_equipe=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, points);
+            ps.setInt(2, matchsJoues);
+            ps.setInt(3, victoires);
+            ps.setInt(4, nuls);
+            ps.setInt(5, defaites);
+            ps.setInt(6, butsPour);
+            ps.setInt(7, butsContre);
+            ps.setInt(8, idTournoi);
+            ps.setInt(9, idEquipe);
+            ps.executeUpdate();
+        }
+    }
+
+    public void resetClassement(int idTournoi) throws SQLException {
+        String sql = "UPDATE classement SET points=0, matchs_joues=0, victoires=0, " +
+                     "nuls=0, defaites=0, buts_pour=0, buts_contre=0 WHERE id_tournoi=?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idTournoi);
+            ps.executeUpdate();
+        }
+    }
+
+    private Classement mapRow(ResultSet rs) throws SQLException {
+        Classement c = new Classement();
+        c.setId_classement(rs.getInt("id_classement"));  // ✅ nom réel de la colonne
+        c.setIdTournoi(rs.getInt("id_tournoi"));
+        c.setPoints(rs.getInt("points"));
+        c.setMatchsJoues(rs.getInt("matchs_joues"));
+        c.setVictoires(rs.getInt("victoires"));
+        c.setNuls(rs.getInt("nuls"));
+        c.setDefaites(rs.getInt("defaites"));
+        c.setButsPour(rs.getInt("buts_pour"));
+        c.setButsContre(rs.getInt("buts_contre"));
+        Equipe e = new Equipe(rs.getInt("e_id"), rs.getString("e_nom"), rs.getString("e_ville"));
+        c.setEquipe(e);
+        return c;
+    }
+}
