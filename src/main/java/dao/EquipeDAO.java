@@ -11,8 +11,8 @@ public class EquipeDAO {
         List<Equipe> equipes = new ArrayList<>();
         String sql = "SELECT * FROM equipe ORDER BY nom";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 equipes.add(mapRow(rs));
             }
@@ -23,10 +23,11 @@ public class EquipeDAO {
     public Equipe findById(int id) throws SQLException {
         String sql = "SELECT * FROM equipe WHERE id_equipe = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
+                if (rs.next())
+                    return mapRow(rs);
             }
         }
         return null;
@@ -35,43 +36,43 @@ public class EquipeDAO {
     public List<Equipe> findByTournoi(int idTournoi) throws SQLException {
         List<Equipe> equipes = new ArrayList<>();
         String sql = "SELECT e.* FROM equipe e " +
-                     "JOIN tournoi_equipe te ON e.id_equipe = te.id_equipe " +
-                     "WHERE te.id_tournoi = ?";
+                "JOIN tournoi_equipe te ON e.id_equipe = te.id_equipe " +
+                "WHERE te.id_tournoi = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, idTournoi);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) equipes.add(mapRow(rs));
+                while (rs.next())
+                    equipes.add(mapRow(rs));
             }
         }
         return equipes;
     }
 
     public void insert(Equipe e) throws SQLException {
-        String sql = "INSERT INTO equipe (nom, ville, logo_url, date_creation) VALUES (?,?,?,?)";
+        String sql = "INSERT INTO equipe (nom, ville, date_creation) VALUES (?,?,?)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, e.getNom());
             ps.setString(2, e.getVille());
-            ps.setString(3, e.getLogoUrl());
-            ps.setDate(4, e.getDateCreation() != null ? new java.sql.Date(e.getDateCreation().getTime()) : null);
+            ps.setDate(3, e.getDateCreation() != null ? new java.sql.Date(e.getDateCreation().getTime()) : null);
             int affectedRows = ps.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet keys = ps.getGeneratedKeys()) {
-                    if (keys.next()) e.setId_equipe(keys.getInt(1));
+                    if (keys.next())
+                        e.setId_equipe(keys.getInt(1));
                 }
             }
         }
     }
 
     public void update(Equipe e) throws SQLException {
-        String sql = "UPDATE equipe SET nom=?, ville=?, logo_url=? WHERE id_equipe=?";
+        String sql = "UPDATE equipe SET nom=?, ville=? WHERE id_equipe=?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, e.getNom());
             ps.setString(2, e.getVille());
-            ps.setString(3, e.getLogoUrl());
-            ps.setInt(4, e.getId_equipe());
+            ps.setInt(3, e.getId_equipe());
             ps.executeUpdate();
         }
     }
@@ -79,7 +80,7 @@ public class EquipeDAO {
     public void delete(int id) throws SQLException {
         String sql = "DELETE FROM equipe WHERE id_equipe=?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
@@ -90,9 +91,9 @@ public class EquipeDAO {
         e.setId_equipe(rs.getInt("id_equipe"));
         e.setNom(rs.getString("nom"));
         e.setVille(rs.getString("ville"));
-        e.setLogoUrl(rs.getString("logo_url"));
         Date d = rs.getDate("date_creation");
-        if (d != null) e.setDateCreation(new java.util.Date(d.getTime()));
+        if (d != null)
+            e.setDateCreation(new java.util.Date(d.getTime()));
         return e;
     }
 }

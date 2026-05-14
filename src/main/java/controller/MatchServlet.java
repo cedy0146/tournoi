@@ -1,9 +1,14 @@
 package controller;
 
 import metier.TournoiMetier;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import model.Match;
+import model.Tournoi;
+
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @WebServlet("/matchs")
@@ -12,45 +17,77 @@ public class MatchServlet extends HttpServlet {
     private TournoiMetier metier = new TournoiMetier();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        int idTournoi = getIntParam(req, "idTournoi");
+        if (action == null)
+            action = "list"; // Action par défaut si non spécifiée
 
         try {
-            if ("score".equals(action) && idTournoi > 0) {
-                int mid = getIntParam(req, "id");
-                if (mid > 0) {
-                    req.setAttribute("match", metier.getMatchsByTournoi(idTournoi).stream()
-                            .filter(m -> m.getId_match() == mid)
-                            .findFirst().orElse(null));
-                }
-                req.setAttribute("idTournoi", idTournoi);
-                req.getRequestDispatcher("/jsp/matchs/score.jsp").forward(req, resp);
+            switch (action) {
+                case "score":
+                    int idMatch = getIntParam(req, "id");
+                    int idTournoi = getIntParam(req, "idTournoi");
+
+                    if (idMatch <= 0 || idTournoi <= 0) {
+                        resp.sendRedirect(req.getContextPath() + "/tournois?action=list");
+                        return;
+                    }
+
+                    Match match = metier.getMatchDAO().findById(idMatch);
+                    Tournoi tournoi = metier.getTournoiById(idTournoi);
+
+                    if (match == null || tournoi == null) {
+                        req.setAttribute("error", "Match ou Tournoi introuvable.");
+                        dispatch(req, resp, "/jsp/error.jsp");
+                        return;
+                    }
+
+                    req.setAttribute("match", match);
+                    req.setAttribute("tournoi", tournoi); // Pour le retour au calendrier
+                    dispatch(req, resp, "/jsp/matchs/score.jsp");
+                    break;
+
+                default:
+                    resp.sendRedirect(req.getContextPath() + "/tournois?action=list");
+                    break;
             }
         } catch (Exception e) {
             req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/jsp/error.jsp").forward(req, resp);
+            dispatch(req, resp, "/jsp/error.jsp");
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
-
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        try {
-            int idMatch = getIntParam(req, "idMatch");
-            int idTournoi = getIntParam(req, "idTournoi");
-            int score1 = getIntParam(req, "score1");
-            int score2 = getIntParam(req, "score2");
+        String action = req.getParameter("action");
 
-            metier.enregistrerScore(idMatch, score1, score2);
-            resp.sendRedirect(req.getContextPath() + "/tournois?action=view&id=" + idTournoi + "&msg=score_enregistre");
+        try {
+            if ("saveScore".equals(action)) {
+                int idMatch = getIntParam(req, "idMatch");
+                int idTournoi = getIntParam(req, "idTournoi");
+                int scoreEquipe1 = getIntParam(req, "scoreEquipe1");
+                int scoreEquipe2 = getIntParam(req, "scoreEquipe2");
+
+                try {
+                    metier.enregistrerScore(idMatch, scoreEquipe1, scoreEquipe2);
+                    resp.sendRedirect(req.getContextPath() + "/tournois?action=view&id=" + idTournoi
+                            + "&tab=calendrier&msg=score_enregistre");
+                } catch (Exception e) {
+                    // En cas d'erreur métier, on recharge les données et on reste sur le formulaire
+                    req.setAttribute("error", e.getMessage());
+                    req.setAttribute("match", metier.getMatchDAO().findById(idMatch));
+                    req.setAttribute("tournoi", metier.getTournoiById(idTournoi));
+                    dispatch(req, resp, "/jsp/matchs/score.jsp");
+                }
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/tournois?action=list");
+            }
         } catch (Exception e) {
-            req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/jsp/error.jsp").forward(req, resp);
+            if (!resp.isCommitted()) {
+                req.setAttribute("error", e.getMessage());
+                dispatch(req, resp, "/jsp/error.jsp");
+            }
         }
     }
 
@@ -61,5 +98,10 @@ public class MatchServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    private void dispatch(HttpServletRequest req, HttpServletResponse resp, String path)
+            throws ServletException, IOException {
+        req.getRequestDispatcher(path).forward(req, resp);
     }
 }

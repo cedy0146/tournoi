@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ include file="/jsp/header.jsp" %>
@@ -11,9 +11,9 @@
 
     <div class="hero-section">
         <div style="font-family:'Bebas Neue',cursive;font-size:3rem;letter-spacing:4px;">
-            &#127942; Gestion des <span style="color:var(--vert)">Tournois</span>
+            &#127942; Gestion des <span style="color:white; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">Tournois</span>
         </div>
-        <p style="color:#9ca3af;margin-top:0.5rem;font-size:1.1rem;">
+        <p style="color:#bfdbfe;margin-top:0.5rem;font-size:1.1rem;">
             Creez et gerez vos tournois. Generation automatique du calendrier incluse.
         </p>
         <div class="stats-grid">
@@ -33,9 +33,9 @@
 
     <c:choose>
         <c:when test="${empty tournois}">
-            <div style="text-align:center;padding:4rem;color:#6b7280;">
+            <div style="text-align:center;padding:4rem;color:#2a5298;">
                 <div style="font-size:4rem;">&#127951;</div>
-                <p style="font-size:1.2rem;margin-top:1rem;">Aucun tournoi pour l'instant.</p>
+                <p style="font-size:1.2rem;margin-top:1rem;font-weight:700;">Aucun tournoi pour l'instant.</p>
                 <a href="${pageContext.request.contextPath}/tournois?action=create"
                    class="btn btn-primary" style="margin-top:1rem;">
                     Creer le premier tournoi
@@ -78,7 +78,7 @@
                             <a href="${pageContext.request.contextPath}/tournois?action=view&id=${t.id}"
                                class="btn btn-outline btn-sm">Voir</a>
                             <a href="${pageContext.request.contextPath}/tournois?action=edit&id=${t.id}"
-                               class="btn btn-sm" style="border:2px solid #6b7280;color:#9ca3af;">Modifier</a>
+                               class="btn btn-sm" style="border:2px solid #2a5298;color:#2a5298;font-weight:700;">Modifier</a>
                             <a href="${pageContext.request.contextPath}/tournois?action=delete&id=${t.id}"
                                class="btn btn-danger btn-sm"
                                onclick="return confirm('Supprimer ce tournoi ?')">Supprimer</a>

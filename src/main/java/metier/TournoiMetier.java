@@ -25,16 +25,37 @@ public class TournoiMetier {
         return t;
     }
 
+    public List<Tournoi> getTournoisPaginated(int page, int size) throws Exception {
+        int offset = (page - 1) * size;
+        return tournoiDAO.findPaginated(offset, size);
+    }
+
+    public int getTotalPages(int size) throws Exception {
+        int total = tournoiDAO.count();
+        return (int) Math.ceil((double) total / size);
+    }
+
     public void creerTournoi(Tournoi t) throws Exception {
         if (t.getNom() == null || t.getNom().trim().isEmpty())
             throw new Exception("Le nom du tournoi est obligatoire.");
         if (t.getType() == null)
             throw new Exception("Le type du tournoi est obligatoire.");
+        
+        validateDates(t);
         tournoiDAO.insert(t);
     }
 
     public void modifierTournoi(Tournoi t) throws Exception {
+        validateDates(t);
         tournoiDAO.update(t);
+    }
+
+    private void validateDates(Tournoi t) throws Exception {
+        if (t.getDateDebut() != null && t.getDateFin() != null) {
+            if (t.getDateDebut().after(t.getDateFin())) {
+                throw new Exception("La date de début ne peut pas être après la date de fin.");
+            }
+        }
     }
 
     public void supprimerTournoi(int id) throws Exception {
@@ -68,6 +89,10 @@ public class TournoiMetier {
 
     public void desinscrireEquipe(int idTournoi, int idEquipe) throws Exception {
         tournoiDAO.removeEquipe(idTournoi, idEquipe);
+    }
+
+    public MatchDAO getMatchDAO() {
+        return matchDAO;
     }
 
     // =================== CALENDRIER ===================
@@ -165,6 +190,10 @@ public class TournoiMetier {
      * Enregistre un score et met à jour automatiquement le classement (pour championnat).
      */
     public void enregistrerScore(int idMatch, int score1, int score2) throws Exception {
+        if (score1 < 0 || score2 < 0) {
+            throw new Exception("Les scores ne peuvent pas être négatifs.");
+        }
+
         Match m = matchDAO.findById(idMatch);
         if (m == null) throw new Exception("Match introuvable.");
         if (m.isJoue()) throw new Exception("Ce match a déjà été joué.");

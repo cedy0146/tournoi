@@ -26,8 +26,14 @@ public class TournoiServlet extends HttpServlet {
         try {
             switch (action) {
                 case "list":
-                    List<Tournoi> tournois = metier.getAllTournois();
-                    req.setAttribute("tournois", tournois);
+                    int page = getIntParam(req, "page");
+                    if (page <= 0)
+                        page = 1;
+                    int size = 10; // Nombre de tournois par page
+
+                    req.setAttribute("tournois", metier.getTournoisPaginated(page, size));
+                    req.setAttribute("currentPage", page);
+                    req.setAttribute("totalPages", metier.getTotalPages(size));
                     dispatch(req, resp, "/jsp/tournois/list.jsp");
                     break;
 
@@ -43,15 +49,47 @@ public class TournoiServlet extends HttpServlet {
                     break;
 
                 case "view":
-                    int tid = getIntParam(req, "id");
-                    if (tid > 0) {
-                        Tournoi t = metier.getTournoiById(tid);
-                        req.setAttribute("tournoi", t);
-                        req.setAttribute("matchs", metier.getMatchsByTournoi(tid));
-                        req.setAttribute("classement", metier.getClassement(tid));
-                        req.setAttribute("toutesEquipes", metier.getAllEquipes());
+                    int idView = getIntParam(req, "id");
+                    if (idView <= 0) {
+                        resp.sendRedirect(req.getContextPath() + "/tournois?action=list");
+                        return;
                     }
-                    dispatch(req, resp, "/jsp/tournois/detail.jsp");
+
+                    Tournoi t = metier.getTournoiById(idView);
+                    if (t == null) {
+                        req.setAttribute("error", "Tournoi introuvable.");
+                        dispatch(req, resp, "/jsp/error.jsp");
+                        return;
+                    }
+                    req.setAttribute("tournoi", t);
+
+                    String tab = req.getParameter("tab");
+                    if (tab == null || tab.isEmpty()) {
+                        tab = "equipes"; // Onglet par défaut
+                    }
+                    req.setAttribute("currentTab", tab); // Pour marquer l'onglet actif dans la JSP
+
+                    String jspPath = "";
+                    switch (tab) {
+                        case "equipes":
+                            req.setAttribute("toutesEquipes", metier.getAllEquipes()); // Pour le formulaire
+                                                                                       // d'inscription
+                            jspPath = "/jsp/tournois/equipes.jsp";
+                            break;
+                        case "calendrier":
+                            req.setAttribute("matchs", metier.getMatchsByTournoi(idView));
+                            jspPath = "/jsp/tournois/calendrier.jsp";
+                            break;
+                        case "classement":
+                            req.setAttribute("classement", metier.getClassement(idView));
+                            jspPath = "/jsp/tournois/classement.jsp";
+                            break;
+                        default:
+                            resp.sendRedirect(
+                                    req.getContextPath() + "/tournois?action=view&id=" + idView + "&tab=equipes");
+                            return;
+                    }
+                    dispatch(req, resp, jspPath);
                     break;
 
                 case "delete":

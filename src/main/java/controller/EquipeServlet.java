@@ -63,7 +63,6 @@ public class EquipeServlet extends HttpServlet {
             Equipe e = new Equipe();
             e.setNom(req.getParameter("nom"));
             e.setVille(req.getParameter("ville"));
-            e.setLogoUrl(req.getParameter("logoUrl"));
 
             int id = getIntParam(req, "id");
             if (id > 0) {

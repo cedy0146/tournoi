@@ -6,6 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TournoiSport</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/sport.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #1e3c72;
+            --accent-blue: #2a5298;
+            --light-blue: #f0f7ff;
+            --border-blue: #bfdbfe;
+        }
+        body { font-family: 'Rajdhani', sans-serif; background-color: var(--light-blue); color: var(--primary-blue); }
+        h1, h2, h3, .hero-title { font-family: 'Bebas Neue', cursive; }
+    </style>
 </head>
 <body>
 <nav class="navbar">
